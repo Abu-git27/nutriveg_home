@@ -97,118 +97,139 @@ class _HomeScreenState extends State<HomeScreen> {
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
+  double getTotalExpense() {
+    final box = Hive.box('purchases');
+
+    double total = 0;
+
+    for (int i = 0; i < box.length; i++) {
+      final item = box.getAt(i);
+
+      total += double.tryParse(
+        item['price'].toString(),
+      ) ??
+          0;
+    }
+
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F9F4),
+      backgroundColor: const Color(0xFFF5F9F4),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'NutriVeg Home',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Good Morning 👋",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            SizedBox(height: 20),
-
-            Row(
+      body: ValueListenableBuilder(
+        valueListenable: Hive.box('purchases').listenable(),
+        builder: (context, Box box, _) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: DashboardCard(
-                    title: "Today's Expense",
-                    value: "₹0",
-                    icon: Icons.currency_rupee,
+                const Text(
+                  "Good Morning 👋",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: DashboardCard(
-                    title: "Health Score",
-                    value: "0",
-                    icon: Icons.favorite,
-                  ),
-                ),
-              ],
-            ),
 
-            SizedBox(height: 10),
+                const SizedBox(height: 20),
 
-            Row(
-              children: [
-                Expanded(
-                  child: DashboardCard(
-                    title: "Current Stock",
-                    value: "0",
-                    icon: Icons.inventory,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: DashboardCard(
-                    title: "Recipes",
-                    value: "0",
-                    icon: Icons.restaurant_menu,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 25),
-
-            Text(
-              "Quick Actions",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            SizedBox(height: 15),
-
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AddPurchaseScreen(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DashboardCard(
+                        title: "Total Expense",
+                        value:
+                        "₹${getTotalExpense().toStringAsFixed(0)}",
+                        icon: Icons.currency_rupee,
+                      ),
                     ),
-                  );
-                },
-                icon: Icon(Icons.add),
-                label: Text("Add Purchase"),
-              ),
-            ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: DashboardCard(
+                        title: "Health Score",
+                        value: "0",
+                        icon: Icons.favorite,
+                      ),
+                    ),
+                  ],
+                ),
 
-            SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.restaurant),
-                label: Text("Record Consumption"),
-              ),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: DashboardCard(
+                        title: "Current Stock",
+                        value: "0",
+                        icon: Icons.inventory,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: DashboardCard(
+                        title: "Recipes",
+                        value: "0",
+                        icon: Icons.restaurant_menu,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 25),
+
+                const Text(
+                  "Quick Actions",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AddPurchaseScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Purchase"),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.restaurant),
+                    label: const Text("Record Consumption"),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
