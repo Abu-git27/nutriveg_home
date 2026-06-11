@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 
 class AddPurchaseScreen extends StatefulWidget {
   const AddPurchaseScreen({super.key});
@@ -8,7 +9,6 @@ class AddPurchaseScreen extends StatefulWidget {
 }
 
 class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
-
   final formKey = GlobalKey<FormState>();
 
   final vegetableController = TextEditingController();
@@ -23,20 +23,17 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
       appBar: AppBar(
         title: const Text("Add Purchase"),
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
-
         child: Form(
           key: formKey,
-
           child: ListView(
             children: [
-
               TextFormField(
                 controller: vegetableController,
                 decoration: const InputDecoration(
                   labelText: "Vegetable Name",
+                  border: OutlineInputBorder(),
                 ),
               ),
 
@@ -47,13 +44,17 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: "Quantity",
+                  border: OutlineInputBorder(),
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              DropdownButtonFormField(
+              DropdownButtonFormField<String>(
                 value: selectedUnit,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
                 items: const [
                   DropdownMenuItem(
                     value: "Kg",
@@ -82,6 +83,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   labelText: "Price",
+                  border: OutlineInputBorder(),
                 ),
               ),
 
@@ -89,6 +91,15 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
 
               ElevatedButton(
                 onPressed: () {
+                  final box = Hive.box('purchases');
+
+                  box.add({
+                    'vegetable': vegetableController.text,
+                    'quantity': quantityController.text,
+                    'unit': selectedUnit,
+                    'price': priceController.text,
+                    'date': DateTime.now().toString(),
+                  });
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -97,8 +108,11 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                       ),
                     ),
                   );
-                },
 
+                  vegetableController.clear();
+                  quantityController.clear();
+                  priceController.clear();
+                },
                 child: const Text("Save Purchase"),
               ),
             ],
@@ -106,5 +120,13 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    vegetableController.dispose();
+    quantityController.dispose();
+    priceController.dispose();
+    super.dispose();
   }
 }

@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
 import 'screens/add_purchase_screen.dart';
 
-void main() {
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+
+  await Hive.openBox('purchases');
+
   runApp(const NutriVegHomeApp());
 }
 
@@ -254,16 +264,49 @@ class PurchaseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('purchases');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Purchases"),
+        title: const Text("Purchases"),
         centerTitle: true,
       ),
-      body: Center(
-        child: Text(
-          "No Purchases Yet",
-          style: TextStyle(fontSize: 22),
-        ),
+      body: ValueListenableBuilder(
+        valueListenable: box.listenable(),
+        builder: (context, Box box, _) {
+          if (box.isEmpty) {
+            return const Center(
+              child: Text(
+                "No Purchases Yet",
+                style: TextStyle(fontSize: 22),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final item = box.getAt(index);
+
+              return Card(
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  leading: const Icon(Icons.shopping_cart),
+                  title: Text(item['vegetable']),
+                  subtitle: Text(
+                    "${item['quantity']} ${item['unit']}",
+                  ),
+                  trailing: Text(
+                    "₹${item['price']}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
