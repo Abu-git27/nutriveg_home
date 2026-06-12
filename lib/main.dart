@@ -168,10 +168,10 @@ class DashboardScreen extends StatelessWidget {
 
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: DashboardCard(
                         title: "Current Stock",
-                        value: "0",
+                        value: "${box.length}",
                         icon: Icons.inventory,
                       ),
                     ),
@@ -252,22 +252,21 @@ class DashboardCard extends StatelessWidget {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(16),
-
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Icon(icon, size: 35),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
 
             Text(
               title,
@@ -312,11 +311,41 @@ class PurchaseScreen extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Delete Purchase"),
+                        content: const Text(
+                          "Are you sure you want to delete this purchase?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              box.deleteAt(index);
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Delete"),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+
                   leading: const Icon(Icons.shopping_cart),
+
                   title: Text(item['vegetable']),
+
                   subtitle: Text(
                     "${item['quantity']} ${item['unit']}",
                   ),
+
                   trailing: Text(
                     "₹${item['price']}",
                     style: const TextStyle(
@@ -338,16 +367,43 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('purchases');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Inventory"),
+        title: const Text("Inventory"),
         centerTitle: true,
       ),
-      body: Center(
-        child: Text(
-          "No Stock Available",
-          style: TextStyle(fontSize: 22),
-        ),
+      body: ValueListenableBuilder(
+        valueListenable: box.listenable(),
+        builder: (context, Box box, _) {
+          if (box.isEmpty) {
+            return const Center(
+              child: Text(
+                "No Stock Available",
+                style: TextStyle(fontSize: 22),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final item = box.getAt(index);
+
+              return Card(
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  leading: const Icon(Icons.inventory),
+                  title: Text(item['vegetable']),
+                  subtitle: Text(
+                    "${item['quantity']} ${item['unit']}",
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
