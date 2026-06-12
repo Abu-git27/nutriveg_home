@@ -105,10 +105,8 @@ class DashboardScreen extends StatelessWidget {
     for (int i = 0; i < box.length; i++) {
       final item = box.getAt(i);
 
-      total += double.tryParse(
-        item['price'].toString(),
-      ) ??
-          0;
+      total +=
+          double.tryParse(item['price'].toString()) ?? 0;
     }
 
     return total;
@@ -121,24 +119,44 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'NutriVeg Home',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
       body: ValueListenableBuilder(
-        valueListenable: Hive.box('purchases').listenable(),
+        valueListenable:
+        Hive.box('purchases').listenable(),
         builder: (context, Box box, _) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Good Morning 👋",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "🥕 Welcome to NutriVeg Home",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 5),
+
+                    Text(
+                      "Track your vegetables smartly",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),
@@ -153,7 +171,9 @@ class DashboardScreen extends StatelessWidget {
                         icon: Icons.currency_rupee,
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
                     const Expanded(
                       child: DashboardCard(
                         title: "Health Score",
@@ -175,7 +195,9 @@ class DashboardScreen extends StatelessWidget {
                         icon: Icons.inventory,
                       ),
                     ),
+
                     const SizedBox(width: 10),
+
                     const Expanded(
                       child: DashboardCard(
                         title: "Recipes",
@@ -206,12 +228,14 @@ class DashboardScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const AddPurchaseScreen(),
+                          builder: (_) =>
+                          const AddPurchaseScreen(),
                         ),
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text("Add Purchase"),
+                    label:
+                    const Text("Add Purchase"),
                   ),
                 ),
 
@@ -222,8 +246,12 @@ class DashboardScreen extends StatelessWidget {
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.restaurant),
-                    label: const Text("Record Consumption"),
+                    icon: const Icon(
+                      Icons.restaurant,
+                    ),
+                    label: const Text(
+                      "Record Consumption",
+                    ),
                   ),
                 ),
               ],
@@ -247,30 +275,69 @@ class DashboardCard extends StatelessWidget {
     required this.icon,
   });
 
+  Color getCardColor() {
+    switch (title) {
+      case "Total Expense":
+        return Colors.green;
+
+      case "Current Stock":
+        return Colors.orange;
+
+      case "Health Score":
+        return Colors.red;
+
+      case "Recipes":
+        return Colors.purple;
+
+      default:
+        return Colors.blue;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      child: Padding(
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: getCardColor().withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           children: [
-            Icon(icon, size: 35),
-            const SizedBox(height: 10),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: getCardColor(),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             Text(
               value,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(height: 6),
 
             Text(
               title,
               textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -279,8 +346,18 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
-class PurchaseScreen extends StatelessWidget {
+class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({super.key});
+
+  @override
+  State<PurchaseScreen> createState() => _PurchaseScreenState();
+}
+
+class _PurchaseScreenState extends State<PurchaseScreen> {
+  final TextEditingController searchController =
+  TextEditingController();
+
+  String searchText = "";
 
   @override
   Widget build(BuildContext context) {
@@ -291,72 +368,156 @@ class PurchaseScreen extends StatelessWidget {
         title: const Text("Purchases"),
         centerTitle: true,
       ),
-      body: ValueListenableBuilder(
-        valueListenable: box.listenable(),
-        builder: (context, Box box, _) {
-          if (box.isEmpty) {
-            return const Center(
-              child: Text(
-                "No Purchases Yet",
-                style: TextStyle(fontSize: 22),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: TextField(
+              controller: searchController,
+              decoration: const InputDecoration(
+                hintText: "Search Vegetable...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
               ),
-            );
-          }
+              onChanged: (value) {
+                setState(() {
+                  searchText = value.toLowerCase();
+                });
+              },
+            ),
+          ),
 
-          return ListView.builder(
-            itemCount: box.length,
-            itemBuilder: (context, index) {
-              final item = box.getAt(index);
+          Expanded(
+            child: ValueListenableBuilder(
+              valueListenable: box.listenable(),
+              builder: (context, Box box, _) {
+                if (box.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No Purchases Yet",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                  );
+                }
 
-              return Card(
-                margin: const EdgeInsets.all(8),
-                child: ListTile(
-                  onLongPress: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Delete Purchase"),
-                        content: const Text(
-                          "Are you sure you want to delete this purchase?",
+                List<dynamic> filteredItems = [];
+
+                for (int i = 0; i < box.length; i++) {
+                  final item = box.getAt(i);
+
+                  if (item['vegetable']
+                      .toString()
+                      .toLowerCase()
+                      .contains(searchText)) {
+                    filteredItems.add({
+                      'index': i,
+                      'data': item,
+                    });
+                  }
+                }
+
+                if (filteredItems.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No matching vegetables found",
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filteredItems.length,
+                  itemBuilder: (context, position) {
+                    final item =
+                    filteredItems[position]['data'];
+
+                    final originalIndex =
+                    filteredItems[position]['index'];
+
+                    String purchaseDate = "";
+
+                    if (item['date'] != null) {
+                      try {
+                        final date =
+                        DateTime.parse(item['date']);
+
+                        purchaseDate =
+                        "${date.day}-${date.month}-${date.year}";
+                      } catch (e) {
+                        purchaseDate = "";
+                      }
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.all(8),
+                      child: ListTile(
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                AlertDialog(
+                                  title: const Text(
+                                    "Delete Purchase",
+                                  ),
+                                  content: const Text(
+                                    "Are you sure you want to delete this purchase?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(
+                                          context,
+                                        );
+                                      },
+                                      child:
+                                      const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        box.deleteAt(
+                                          originalIndex,
+                                        );
+                                        Navigator.pop(
+                                          context,
+                                        );
+                                      },
+                                      child:
+                                      const Text("Delete"),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        },
+
+                        leading: const Icon(
+                          Icons.shopping_cart,
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Cancel"),
+
+                        title: Text(
+                          item['vegetable'],
+                        ),
+
+                        subtitle: Text(
+                          "${item['quantity']} ${item['unit']} • ₹${item['rate']}/Kg\n$purchaseDate",
+                        ),
+
+                        trailing: Text(
+                          "₹${item['price']}",
+                          style: const TextStyle(
+                            fontWeight:
+                            FontWeight.bold,
+                            fontSize: 16,
                           ),
-                          TextButton(
-                            onPressed: () {
-                              box.deleteAt(index);
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Delete"),
-                          ),
-                        ],
+                        ),
+
+                        isThreeLine: true,
                       ),
                     );
                   },
-
-                  leading: const Icon(Icons.shopping_cart),
-
-                  title: Text(item['vegetable']),
-
-                  subtitle: Text(
-                    "${item['quantity']} ${item['unit']}",
-                  ),
-
-                  trailing: Text(
-                    "₹${item['price']}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -364,6 +525,68 @@ class PurchaseScreen extends StatelessWidget {
 
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({super.key});
+
+  String getVegetableEmoji(String vegetable) {
+    switch (vegetable.toLowerCase()) {
+      case "carrot":
+        return "🥕";
+
+      case "onion":
+        return "🧅";
+
+      case "tomato":
+        return "🍅";
+
+      case "potato":
+        return "🥔";
+
+      case "cabbage":
+        return "🥬";
+
+      case "chilli":
+        return "🌶️";
+
+      case "brinjal":
+        return "🍆";
+
+      case "corn":
+        return "🌽";
+
+      default:
+        return "🥗";
+    }
+  }
+
+  Color getVegetableColor(String vegetable) {
+    switch (vegetable.toLowerCase()) {
+      case "carrot":
+        return Colors.orange.shade100;
+
+      case "onion":
+        return Colors.purple.shade100;
+
+      case "tomato":
+        return Colors.red.shade100;
+
+      case "potato":
+        return Colors.brown.shade100;
+
+      case "cabbage":
+        return Colors.green.shade100;
+
+      case "chilli":
+        return Colors.red.shade50;
+
+      case "brinjal":
+        return Colors.deepPurple.shade100;
+
+      case "corn":
+        return Colors.yellow.shade100;
+
+      default:
+        return Colors.grey.shade100;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -386,18 +609,67 @@ class InventoryScreen extends StatelessWidget {
             );
           }
 
+          Map<String, double> inventory = {};
+          Map<String, double> inventoryValue = {};
+
+          for (int i = 0; i < box.length; i++) {
+            final item = box.getAt(i);
+
+            String vegetable = item['vegetable'];
+
+            double quantity =
+                double.tryParse(item['quantity'].toString()) ?? 0;
+
+            double price =
+                double.tryParse(item['price'].toString()) ?? 0;
+
+            inventory[vegetable] =
+                (inventory[vegetable] ?? 0) + quantity;
+
+            inventoryValue[vegetable] =
+                (inventoryValue[vegetable] ?? 0) + price;
+          }
+
+          final vegetables = inventory.keys.toList();
+
           return ListView.builder(
-            itemCount: box.length,
+            itemCount: vegetables.length,
             itemBuilder: (context, index) {
-              final item = box.getAt(index);
+              final vegetable = vegetables[index];
 
               return Card(
-                margin: const EdgeInsets.all(8),
-                child: ListTile(
-                  leading: const Icon(Icons.inventory),
-                  title: Text(item['vegetable']),
-                  subtitle: Text(
-                    "${item['quantity']} ${item['unit']}",
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: getVegetableColor(vegetable),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListTile(
+                    leading: Text(
+                      getVegetableEmoji(vegetable),
+                      style: const TextStyle(
+                        fontSize: 32,
+                      ),
+                    ),
+                    title: Text(
+                      vegetable,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "${inventory[vegetable]} Kg\n"
+                          "Value: ₹${inventoryValue[vegetable]!.toStringAsFixed(0)}",
+                    ),
+                    isThreeLine: true,
                   ),
                 ),
               );

@@ -13,9 +13,19 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
 
   final vegetableController = TextEditingController();
   final quantityController = TextEditingController();
-  final priceController = TextEditingController();
+  final rateController = TextEditingController();
 
   String selectedUnit = "Kg";
+
+  double getTotalPrice() {
+    double quantity =
+        double.tryParse(quantityController.text) ?? 0;
+
+    double rate =
+        double.tryParse(rateController.text) ?? 0;
+
+    return quantity * rate;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +56,9 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                   labelText: "Quantity",
                   border: OutlineInputBorder(),
                 ),
+                onChanged: (_) {
+                  setState(() {});
+                },
               ),
 
               const SizedBox(height: 15),
@@ -79,11 +92,29 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
               const SizedBox(height: 15),
 
               TextFormField(
-                controller: priceController,
+                controller: rateController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                  labelText: "Price",
+                  labelText: "Rate Per Kg",
                   border: OutlineInputBorder(),
+                ),
+                onChanged: (_) {
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: 15),
+
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    "Total Price: ₹${getTotalPrice().toStringAsFixed(0)}",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
 
@@ -93,11 +124,14 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
                 onPressed: () {
                   final box = Hive.box('purchases');
 
+                  double totalPrice = getTotalPrice();
+
                   box.add({
                     'vegetable': vegetableController.text,
                     'quantity': quantityController.text,
                     'unit': selectedUnit,
-                    'price': priceController.text,
+                    'rate': rateController.text,
+                    'price': totalPrice,
                     'date': DateTime.now().toString(),
                   });
 
@@ -111,7 +145,9 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
 
                   vegetableController.clear();
                   quantityController.clear();
-                  priceController.clear();
+                  rateController.clear();
+
+                  setState(() {});
                 },
                 child: const Text("Save Purchase"),
               ),
@@ -126,7 +162,7 @@ class _AddPurchaseScreenState extends State<AddPurchaseScreen> {
   void dispose() {
     vegetableController.dispose();
     quantityController.dispose();
-    priceController.dispose();
+    rateController.dispose();
     super.dispose();
   }
 }
