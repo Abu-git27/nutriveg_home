@@ -112,6 +112,28 @@ class DashboardScreen extends StatelessWidget {
     return total;
   }
 
+  int getHealthScore() {
+    final box = Hive.box('purchases');
+
+    Set<String> vegetables = {};
+
+    for (int i = 0; i < box.length; i++) {
+      final item = box.getAt(i);
+
+      vegetables.add(
+        item['vegetable']
+            .toString()
+            .toLowerCase(),
+      );
+    }
+
+    int count = vegetables.length;
+
+    if (count >= 5) return 100;
+
+    return count * 20;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,9 +168,7 @@ class DashboardScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     SizedBox(height: 5),
-
                     Text(
                       "Track your vegetables smartly",
                       style: TextStyle(
@@ -174,10 +194,11 @@ class DashboardScreen extends StatelessWidget {
 
                     const SizedBox(width: 10),
 
-                    const Expanded(
+                    Expanded(
                       child: DashboardCard(
                         title: "Health Score",
-                        value: "0",
+                        value:
+                        "${getHealthScore()}",
                         icon: Icons.favorite,
                       ),
                     ),
@@ -706,15 +727,159 @@ class ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('purchases');
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F9F4),
       appBar: AppBar(
-        title: Text("Reports"),
+        title: const Text("📊 Reports"),
         centerTitle: true,
       ),
-      body: Center(
-        child: Text(
-          "No Reports Generated",
-          style: TextStyle(fontSize: 22),
+      body: ValueListenableBuilder(
+        valueListenable: box.listenable(),
+        builder: (context, Box box, _) {
+          int totalPurchases = box.length;
+
+          double totalExpense = 0;
+
+          Set<String> vegetables = {};
+
+          for (int i = 0; i < box.length; i++) {
+            final item = box.getAt(i);
+
+            totalExpense +=
+                double.tryParse(item['price'].toString()) ?? 0;
+
+            vegetables.add(
+              item['vegetable'].toString().toLowerCase(),
+            );
+          }
+
+          double averageExpense =
+          totalPurchases > 0
+              ? totalExpense / totalPurchases
+              : 0;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _reportCard(
+                        "🛒",
+                        "Purchases",
+                        "$totalPurchases",
+                        Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _reportCard(
+                        "🥕",
+                        "Vegetables",
+                        "${vegetables.length}",
+                        Colors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _reportCard(
+                        "💰",
+                        "Expense",
+                        "₹${totalExpense.toStringAsFixed(0)}",
+                        Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _reportCard(
+                        "📈",
+                        "Average",
+                        "₹${averageExpense.toStringAsFixed(0)}",
+                        Colors.purple,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 25),
+
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.insights,
+                          size: 50,
+                          color: Colors.green,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          "NutriVeg Insights",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          "Track your vegetable purchases, inventory and health habits smarter every day.",
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _reportCard(
+      String emoji,
+      String title,
+      String value,
+      Color color,
+      ) {
+    return Card(
+      color: color.withOpacity(0.15),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 35),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(title),
+          ],
         ),
       ),
     );
