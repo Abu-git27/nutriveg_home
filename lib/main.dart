@@ -11,6 +11,7 @@ Future<void> main() async {
   await Hive.initFlutter();
 
   await Hive.openBox('purchases');
+  await Hive.openBox('consumptions');
 
   runApp(const NutriVegHomeApp());
 }
