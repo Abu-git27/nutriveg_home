@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'screens/add_purchase_screen.dart';
+import 'screens/add_consumption_screen.dart';
 
 
 Future<void> main() async {
@@ -199,7 +200,7 @@ class DashboardScreen extends StatelessWidget {
                       child: DashboardCard(
                         title: "Health Score",
                         value:
-                        "${getHealthScore()}",
+                        "${getHealthScore()}%",
                         icon: Icons.favorite,
                       ),
                     ),
@@ -267,7 +268,15 @@ class DashboardScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const AddConsumptionScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(
                       Icons.restaurant,
                     ),
@@ -552,28 +561,20 @@ class InventoryScreen extends StatelessWidget {
     switch (vegetable.toLowerCase()) {
       case "carrot":
         return "🥕";
-
       case "onion":
         return "🧅";
-
       case "tomato":
         return "🍅";
-
       case "potato":
         return "🥔";
-
       case "cabbage":
         return "🥬";
-
       case "chilli":
         return "🌶️";
-
       case "brinjal":
         return "🍆";
-
       case "corn":
         return "🌽";
-
       default:
         return "🥗";
     }
@@ -583,28 +584,20 @@ class InventoryScreen extends StatelessWidget {
     switch (vegetable.toLowerCase()) {
       case "carrot":
         return Colors.orange.shade100;
-
       case "onion":
         return Colors.purple.shade100;
-
       case "tomato":
         return Colors.red.shade100;
-
       case "potato":
         return Colors.brown.shade100;
-
       case "cabbage":
         return Colors.green.shade100;
-
       case "chilli":
         return Colors.red.shade50;
-
       case "brinjal":
         return Colors.deepPurple.shade100;
-
       case "corn":
         return Colors.yellow.shade100;
-
       default:
         return Colors.grey.shade100;
     }
@@ -612,7 +605,8 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final box = Hive.box('purchases');
+    final purchaseBox = Hive.box('purchases');
+    final consumptionBox = Hive.box('consumptions');
 
     return Scaffold(
       appBar: AppBar(
@@ -620,9 +614,9 @@ class InventoryScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: ValueListenableBuilder(
-        valueListenable: box.listenable(),
+        valueListenable: purchaseBox.listenable(),
         builder: (context, Box box, _) {
-          if (box.isEmpty) {
+          if (purchaseBox.isEmpty) {
             return const Center(
               child: Text(
                 "No Stock Available",
@@ -634,8 +628,9 @@ class InventoryScreen extends StatelessWidget {
           Map<String, double> inventory = {};
           Map<String, double> inventoryValue = {};
 
-          for (int i = 0; i < box.length; i++) {
-            final item = box.getAt(i);
+          // PURCHASES
+          for (int i = 0; i < purchaseBox.length; i++) {
+            final item = purchaseBox.getAt(i);
 
             String vegetable = item['vegetable'];
 
@@ -652,12 +647,28 @@ class InventoryScreen extends StatelessWidget {
                 (inventoryValue[vegetable] ?? 0) + price;
           }
 
+          // CONSUMPTIONS
+          for (int i = 0; i < consumptionBox.length; i++) {
+            final item = consumptionBox.getAt(i);
+
+            String vegetable = item['vegetable'];
+
+            double quantity =
+                double.tryParse(item['quantity'].toString()) ?? 0;
+
+            inventory[vegetable] =
+                (inventory[vegetable] ?? 0) - quantity;
+          }
+
           final vegetables = inventory.keys.toList();
 
           return ListView.builder(
             itemCount: vegetables.length,
             itemBuilder: (context, index) {
               final vegetable = vegetables[index];
+
+              final remainingStock =
+                  inventory[vegetable] ?? 0;
 
               return Card(
                 elevation: 4,
@@ -666,16 +677,22 @@ class InventoryScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius:
+                  BorderRadius.circular(15),
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: getVegetableColor(vegetable),
-                    borderRadius: BorderRadius.circular(15),
+                    color: getVegetableColor(
+                      vegetable,
+                    ),
+                    borderRadius:
+                    BorderRadius.circular(15),
                   ),
                   child: ListTile(
                     leading: Text(
-                      getVegetableEmoji(vegetable),
+                      getVegetableEmoji(
+                        vegetable,
+                      ),
                       style: const TextStyle(
                         fontSize: 32,
                       ),
@@ -683,14 +700,25 @@ class InventoryScreen extends StatelessWidget {
                     title: Text(
                       vegetable,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                        FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
                     subtitle: Text(
-                      "${inventory[vegetable]} Kg\n"
+                      "${remainingStock.toStringAsFixed(2)} Kg\n"
                           "Value: ₹${inventoryValue[vegetable]!.toStringAsFixed(0)}",
                     ),
+                    trailing: remainingStock <= 1
+                        ? const Text(
+                      "⚠️ Low",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight:
+                        FontWeight.bold,
+                      ),
+                    )
+                        : null,
                     isThreeLine: true,
                   ),
                 ),
